@@ -1,0 +1,59 @@
+const WebSocket = require('ws')
+const serialport = require('serialport')
+const Readline = require('@serialport/parser-readline')
+
+const wss = new WebSocket.Server({
+    port: 4000
+});
+
+var read_data = []
+// สร้าง websockets server ที่ port 4000
+wss.on('connection', function connection(ws) { // สร้าง connection
+    ws.on('message', function incoming(message) {
+        // รอรับ data อะไรก็ตาม ที่มาจาก client แบบตลอดเวลา
+        console.log('received: %s', message);
+    });
+    ws.on('close', function close() {
+        // จะทำงานเมื่อปิด Connection ในตัวอย่างคือ ปิด Browser
+        console.log('disconnected');
+    });
+    //ws.send('init message to client');
+    // ส่ง data ไปที่ client เชื่อมกับ websocket server นี้
+
+    setInterval(() => {
+        console.log('sending to data to client:', read_data)
+        ws.send(JSON.stringify(read_data))
+    }, 1000)
+});
+
+const express = require('express')
+const app = express()
+const port = 3000
+
+app.use(express.static('public'))
+
+app.get('/', (req, res) => {
+    res.sendFile('view/index.html', {
+        root: __dirname
+    })
+})
+
+app.listen(port, () => {
+    console.log(`Example app listening at http://localhost:${port}`)
+})
+
+const ad_port = new serialport('COM4', {
+    baudRate: 9600
+});
+const parser = ad_port.pipe(new Readline({
+    delimiter: '\r\n'
+}));
+
+ad_port.on("open", () => {
+    console.log('serial port open');
+});
+
+parser.on('data', data => {
+    read_data = JSON.parse(data);
+    //console.log("read_data", read_data);
+});

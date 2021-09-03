@@ -28,7 +28,7 @@ wss.on('connection', function connection(ws) { // สร้าง connection
 
 const express = require('express')
 const app = express()
-const port = 3000
+const port = 80
 
 app.use(express.static('public'))
 

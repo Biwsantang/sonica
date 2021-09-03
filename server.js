@@ -42,11 +42,11 @@ app.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 })
 
-const ad_port = new serialport('COM4', {
-    baudRate: 9600
+const ad_port = new serialport('/dev/ttyACM0', {
+    baudRate: 115200
 });
 const parser = ad_port.pipe(new Readline({
-    delimiter: '\r\n'
+    delimiter: '\r\n' 
 }));
 
 ad_port.on("open", () => {
@@ -54,6 +54,9 @@ ad_port.on("open", () => {
 });
 
 parser.on('data', data => {
-    read_data = JSON.parse(data);
+    console.log(data);
+    try {
+	read_data = JSON.parse(data);
+    } catch (e) {}
     //console.log("read_data", read_data);
 });

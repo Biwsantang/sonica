@@ -36,7 +36,7 @@ void setup() {
   pinMode(trigPin_L, OUTPUT);
   pinMode(echoPin_L, INPUT);
 
-  Serial.begin(9600); // // Serial Communication is starting with 9600 of baudrate speed
+  Serial.begin(115200); // // Serial Communication is starting with 9600 of baudrate speed
   
   while (!Serial);
 

@@ -21,7 +21,7 @@ wss.on('connection', function connection(ws) { // สร้าง connection
     // ส่ง data ไปที่ client เชื่อมกับ websocket server นี้
 
     setInterval(() => {
-        console.log('sending to data to client:', read_data)
+        //console.log('sending to data to client:', read_data)
         ws.send(JSON.stringify(read_data))
     }, 1000)
 });
@@ -54,7 +54,7 @@ ad_port.on("open", () => {
 });
 
 parser.on('data', data => {
-    console.log(data);
+    //console.log(data);
     try {
 	read_data = JSON.parse(data);
     } catch (e) {}

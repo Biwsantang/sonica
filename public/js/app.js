@@ -1,5 +1,5 @@
 // ทำการเชื่อม Websocket Server ตาม url ที่กำหนด
-var connection = new WebSocket('ws://localhost:4000')
+var connection = new WebSocket('ws://'+location.host+':4000')
 
 var server_cube = [0,0];
 

@@ -13,14 +13,15 @@ const wss = new WebSocket.Server({
 
 var read_data = []
 // สร้าง websockets server ที่ port 4000
-wss.on('connection', function connection(ws) { // สร้าง connection
+wss.on('connection', function connection(ws, req) { // สร้าง connection
+    const ip = req.socket.remoteAddress;
     ws.on('message', function incoming(message) {
         // รอรับ data อะไรก็ตาม ที่มาจาก client แบบตลอดเวลา
-        console.log('received: %s', message);
+        console.log('received from %s - %s', ip, message);
     });
     ws.on('close', function close() {
         // จะทำงานเมื่อปิด Connection ในตัวอย่างคือ ปิด Browser
-        console.log('disconnected');
+        console.log('%s disconnected', ip);
     });
     //ws.send('init message to client');
     // ส่ง data ไปที่ client เชื่อมกับ websocket server นี้

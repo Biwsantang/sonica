@@ -1,9 +1,14 @@
+const yargs = require('yargs/yargs')
+const { hideBin } = require('yargs/helpers')
+
 const WebSocket = require('ws')
 const serialport = require('serialport')
 const Readline = require('@serialport/parser-readline')
 
+const argv = yargs(hideBin(process.argv)).default('web_port',80).default('ws_address','127.0.0.1').default('ws_port',4000).argv
+
 const wss = new WebSocket.Server({
-    port: 4000
+    port: argv.ws_port
 });
 
 var read_data = []
@@ -28,7 +33,7 @@ wss.on('connection', function connection(ws) { // สร้าง connection
 
 const express = require('express')
 const app = express()
-const port = 80
+const web_port = argv.web_port
 
 app.use(express.static('public'))
 
@@ -38,8 +43,8 @@ app.get('/', (req, res) => {
     })
 })
 
-app.listen(port, () => {
-    console.log(`Example app listening at http://localhost:${port}`)
+app.listen(web_port, () => {
+    console.log(`Example app listening at http://localhost:${web_port}`)
 })
 
 const ad_port = new serialport('/dev/ttyACM0', {

@@ -5,7 +5,7 @@ const WebSocket = require('ws')
 const serialport = require('serialport')
 const Readline = require('@serialport/parser-readline')
 
-const argv = yargs(hideBin(process.argv)).default('web_port',80).default('ws_address','127.0.0.1').default('ws_port',4000).argv
+const argv = yargs(hideBin(process.argv)).boolean('ino').default('ino_port','/dev/ttyACM0').default('web_port',80).default('ws_address','127.0.0.1').default('ws_port',4000).argv
 
 const wss = new WebSocket.Server({
     port: argv.ws_port
@@ -27,13 +27,12 @@ wss.on('connection', function connection(ws) { // สร้าง connection
 
     setInterval(() => {
         //console.log('sending to data to client:', read_data)
-        ws.send(JSON.stringify(read_data))
+        //ws.send(JSON.stringify(read_data))
     }, 1000)
 });
 
 const express = require('express')
 const app = express()
-const web_port = argv.web_port
 
 app.use(express.static('public'))
 
@@ -43,25 +42,34 @@ app.get('/', (req, res) => {
     })
 })
 
-app.listen(web_port, () => {
-    console.log(`Example app listening at http://localhost:${web_port}`)
+app.get('/ws_info', (req, res) => {
+    res.json({
+	    address: argv.ws_address,
+	    port: argv.ws_port
+    })
 })
 
-const ad_port = new serialport('/dev/ttyACM0', {
-    baudRate: 115200
-});
-const parser = ad_port.pipe(new Readline({
-    delimiter: '\r\n' 
-}));
+app.listen(argv.web_port, () => {
+    console.log(`Example app listening at http://localhost:${argv.web_port}`)
+})
 
-ad_port.on("open", () => {
-    console.log('serial port open');
-});
+if (argv.ino | argv.ino === undefined | argv.ino_port) {
+	const ad_port = new serialport(argv.ino_port, {
+	    baudRate: 115200
+	});
+	const parser = ad_port.pipe(new Readline({
+	    delimiter: '\r\n' 
+	}));
 
-parser.on('data', data => {
-    //console.log(data);
-    try {
-	read_data = JSON.parse(data);
-    } catch (e) {}
-    //console.log("read_data", read_data);
-});
+	ad_port.on("open", () => {
+	    console.log('serial port open');
+	});
+
+	parser.on('data', data => {
+	    //console.log(data);
+	    try {
+		read_data = JSON.parse(data);
+	    } catch (e) {}
+	    //console.log("read_data", read_data);
+	});
+}

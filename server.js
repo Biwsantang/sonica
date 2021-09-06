@@ -28,7 +28,7 @@ wss.on('connection', function connection(ws, req) { // สร้าง connectio
 
     setInterval(() => {
         //console.log('sending to data to client:', read_data)
-        //ws.send(JSON.stringify(read_data))
+        ws.send(JSON.stringify(read_data))
     }, 1000)
 });
 

@@ -4,6 +4,7 @@
 <head>
     <title>TEST WEBSOCKET</title>
     <script type="text/javascript" src="js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/kalmanjs@1.1.0/lib/kalman.min.js"></script>
 </head>
 
 <body>
@@ -79,17 +80,27 @@
 
         camera.position.z = 50;
 
+	var kf_L = new KalmanFilter();
+	var kf_C = new KalmanFilter();
+	var kf_R = new KalmanFilter();
+
         const animate = function () {
             requestAnimationFrame(animate);
 
-            cube[0].position.x = server_cube[0] * Math.sin(Math.PI * 2 * -45 / 360) - 4.5;
-            cube[0].position.y = server_cube[0] * Math.cos(Math.PI * 2 * -45 / 360) - 2;
+	    var cube_L = kf_L.filter(server_cube[0] > 200 ? 200 : server_cube[0])
+	    console.log(cube_L)
+            cube[0].position.x = cube_L * Math.sin(Math.PI * 2 * -45 / 360) - 4.5;
+            cube[0].position.y = cube_L * Math.cos(Math.PI * 2 * -45 / 360) - 2;
 
-            cube[1].position.x = server_cube[1] * Math.sin(Math.PI * 2 * 0 / 360);
-            cube[1].position.y = server_cube[1] * Math.cos(Math.PI * 2 * 0 / 360);
+	    var cube_C = kf_C.filter(server_cube[1] > 200 ? 200 : server_cube[1])
+	    console.log(cube_C)
+            cube[1].position.x = cube_C * Math.sin(Math.PI * 2 * 0 / 360);
+            cube[1].position.y = cube_C * Math.cos(Math.PI * 2 * 0 / 360);
 
-            cube[2].position.x = server_cube[2] * Math.sin(Math.PI * 2 * 45 / 360) + 4.5;
-            cube[2].position.y = server_cube[2] * Math.cos(Math.PI * 2 * 45 / 360) - 2;
+	    var cube_R = kf_R.filter(server_cube[2] > 200 ? 200 : server_cube[2])
+	    console.log(cube_R)
+            cube[2].position.x = cube_R * Math.sin(Math.PI * 2 * 45 / 360) + 4.5;
+            cube[2].position.y = cube_R * Math.cos(Math.PI * 2 * 45 / 360) - 2;
 
             renderer.render(scene, camera);
         };

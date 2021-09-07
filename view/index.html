@@ -25,6 +25,8 @@
         const controls = new OrbitControls(camera, renderer.domElement)
         controls.enableDamping = true
 
+	var model;
+
         const loader = new STLLoader()
         loader.load(
             'models/Ultrasonic_sensor_triple_mount.stl',
@@ -41,6 +43,10 @@
                 mesh.scale.y = 0.1
                 mesh.scale.z = 0.1
                 scene.add(mesh)
+
+		console.log(mesh);
+		model = mesh;	
+		console.log(model);
             },
             (xhr) => {
                 console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
@@ -62,19 +68,17 @@
         scene.add(cube[1]);
         scene.add(cube[2]);
 
-        const white = new THREE.LineBasicMaterial({
+        const white = new THREE.LineDashedMaterial({
 	        color: 0xffffff
         });
 
-        /*const points = [];
-        points.push( new THREE.Vector3( - 10, 0, 0 ) );
-        points.push( new THREE.Vector3( 0, 10, 0 ) );
-        points.push( new THREE.Vector3( 10, 0, 0 ) );
+	const line_geometry = [new THREE.Geometry(), new THREE.Geometry(), new THREE.Geometry()];
 
-        const geometry = new THREE.BufferGeometry().setFromPoints( points );
+        const line = [new THREE.Line( line_geometry[0], white ), new THREE.Line( line_geometry[1], white ), new THREE.Line( line_geometry[2], white )];
 
-        const line = new THREE.Line( geometry, material );
-        scene.add( line );*/
+        scene.add( line[0] );
+	scene.add( line[1] );
+	scene.add( line[2] );
 
 
         camera.position.z = 50;
@@ -90,6 +94,15 @@
 
             cube[2].position.x = server_cube[2] * Math.sin(Math.PI * 2 * 45 / 360) + 4.5;
             cube[2].position.y = server_cube[2] * Math.cos(Math.PI * 2 * 45 / 360) - 2;
+
+	    for (const i of line_geometry.keys()) {
+		    line_geometry[i].vertices.push(
+			cube[i].position,
+			model.position			
+		    );
+		    line_geometry[i].verticesNeedUpdate = true;
+	    }
+
 
             renderer.render(scene, camera);
         };

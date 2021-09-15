@@ -16,7 +16,7 @@ function makeConnection(info) {
 	};
 	ws.onmessage = function (e) {
 	  // log ค่าที่ถูกส่งมาจาก server
-	  console.log("message from server: ", e.data);
+	  //console.log("message from server: ", e.data);
 	  server_cube = JSON.parse(e.data)['ultra'];
 	};
 

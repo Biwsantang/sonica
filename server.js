@@ -58,7 +58,7 @@ const arduino_setup = (ino_port) => {
 	const ad_port = new serialport(ino_port, {
 		baudRate: 115200
 	})
-	const parser = ad_port.pipe(new readline({
+	const parser = ad_port.pipe(new Readline({
 		delimiter: '\r\n'
 	}))
 	ad_port.on("open", () => {

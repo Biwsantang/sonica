@@ -1,5 +1,9 @@
 // ทำการเชื่อม Websocket Server ตาม url ที่กำหนด
 var server_cube = [0,0,0];
+var rotate = [0,0,0];
+var s_rotate
+var p_rotate
+var first = 1;
 
 
 function makeConnection(info) {
@@ -16,8 +20,15 @@ function makeConnection(info) {
 	};
 	ws.onmessage = function (e) {
 	  // log ค่าที่ถูกส่งมาจาก server
-	  console.log("message from server: ", e.data);
-	  server_cube = JSON.parse(e.data)['ultra'];
+	  //console.log("message from server: ", e.data);
+		data = JSON.parse(e.data)
+	  server_cube = data['ultra'];
+		rotate =  data['rotate'];
+		if(first){
+			first = 0;
+			s_rotate = rotate;
+			p_rotate = rotate;
+		}
 	};
 
 }

@@ -138,8 +138,8 @@
             }
 
             model.rotation.x = THREE.MathUtils.degToRad(rotate[0] - s_rotate[0] + sensor_offset[0]); //roll
-            model.rotation.y = THREE.MathUtils.degToRad(-(rotate[1] - s_rotate[1]) + sensor_offset[1]); //pitch
-            model.rotation.z = THREE.MathUtils.degToRad(-(rotate[2] - s_rotate[2]) + sensor_offset[2]); //yaw
+            model.rotation.y = THREE.MathUtils.degToRad((rotate[1] - s_rotate[1]) + sensor_offset[1]); //pitch
+            model.rotation.z = THREE.MathUtils.degToRad((rotate[2] - s_rotate[2]) + sensor_offset[2]); //yaw
 
             renderer.render(scene, camera);
         };

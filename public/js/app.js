@@ -22,8 +22,8 @@ function makeConnection(info) {
 	  // log ค่าที่ถูกส่งมาจาก server
 	  //console.log("message from server: ", e.data);
 		data = JSON.parse(e.data)
-	  server_cube = data['ultra'];
-		rotate =  data['rotate'];
+	  server_cube = [data[0],data[1],data[2]];
+		rotate =  [data[3],data[4],data[5]];
 		if(first){
 			first = 0;
 			s_rotate = rotate;

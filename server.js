@@ -67,7 +67,7 @@ if (argv.ino | argv.ino === undefined | argv.ino_port) {
 	});
 
 	parser.on('data', data => {
-	    //console.log(data);
+	    console.log(data);
 	    try {
 		read_data = JSON.parse(data);
 	    } catch (e) {}

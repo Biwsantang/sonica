@@ -17,10 +17,12 @@ MPU9250 mpu;
 
 DynamicJsonDocument doc(128);
 
-// defines variables
+float gX,gY,gZ,u0,u1,u2;
+
 long duration_R,duration_C,duration_L; // variable for the duration of sound wave travel
 
 void setup() {
+
   pinMode(trigPin_R, OUTPUT); // Sets the trigPin as an OUTPUT
   pinMode(echoPin_R, INPUT); // Sets the echoPin as an INPUT
   pinMode(trigPin_C, OUTPUT); // Sets the trigPin as an OUTPUT
@@ -43,7 +45,6 @@ void setup() {
   // calibrate anytime you want to
   Serial.println("Accel Gyro calibration will start in 5sec.");
   Serial.println("Please leave the device still on the flat plane.");
-  mpu.verbose(true);
   delay(5000);
   mpu.calibrateAccelGyro();
 
@@ -51,86 +52,60 @@ void setup() {
   Serial.println("Please Wave device in a figure eight until done.");
   delay(5000);
   mpu.calibrateMag();
-
-  print_calibration();
-  mpu.verbose(false);
+  Serial.println("Calibration finish");
 
 }
 void loop() {
 
+  doc.clear();
+
   if (mpu.update()) {
-        static uint32_t prev_ms = millis();
-        if ((millis() - prev_ms) > 100) {
-            doc["rotation"][0] = (float)mpu.getRoll();
-            doc["rotation"][1] = (float)mpu.getPitch();
-            doc["rotation"][2] = (float)mpu.getYaw();
+    static uint32_t prev_ms = millis();
+    if (millis() > prev_ms + 25) {
 
-            //doc["accel"][0] = mpu.getAccX();
-            //doc["accel"][1] = mpu.getAccY();
-            //doc["accel"][2] = mpu.getAccZ();
+      gX = (float)mpu.getRoll();
+      gY = (float)mpu.getPitch()*-1;
+      gZ = (float)mpu.getYaw()*-1;
 
-            prev_ms = millis();
-        }
+      digitalWrite(trigPin_L, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPin_L, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin_L, LOW);
+      duration_L = pulseIn(echoPin_L, HIGH);
 
-        digitalWrite(trigPin_L, LOW);
-        delayMicroseconds(2);
-        digitalWrite(trigPin_L, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(trigPin_L, LOW);
-        duration_L = pulseIn(echoPin_L, HIGH);
-        
-        digitalWrite(trigPin_C, LOW);
-        delayMicroseconds(2);
-        digitalWrite(trigPin_C, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(trigPin_C, LOW);
-        duration_C = pulseIn(echoPin_C, HIGH);
+      digitalWrite(trigPin_C, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPin_C, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin_C, LOW);
+      duration_C = pulseIn(echoPin_C, HIGH);
 
-        digitalWrite(trigPin_R, LOW);
-        delayMicroseconds(2);
-        digitalWrite(trigPin_R, HIGH);
-        delayMicroseconds(10);
-        digitalWrite(trigPin_R, LOW);
-        duration_R = pulseIn(echoPin_R, HIGH);
+      digitalWrite(trigPin_R, LOW);
+      delayMicroseconds(2);
+      digitalWrite(trigPin_R, HIGH);
+      delayMicroseconds(10);
+      digitalWrite(trigPin_R, LOW);
+      duration_R = pulseIn(echoPin_R, HIGH);
 
-        doc["ultra"][2] = (int)duration_R * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
-        doc["ultra"][1] = (int)duration_C * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
-        doc["ultra"][0] = (int)duration_L * 0.034 / 2;
+      u0 = duration_R * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+      u1 = duration_C * 0.034 / 2; // Speed of sound wave divided by 2 (go and back)
+      u2 = duration_L * 0.034 / 2;
+
+      doc.add(u0);
+      doc.add(u1);
+      doc.add(u2);
+      doc.add(gX);
+      doc.add(gY);
+      doc.add(gZ);
+
+      serializeJson(doc, Serial);
+      Serial.println("");
+
+      prev_ms = millis();
+
     }
 
-  serializeJson(doc, Serial);
-  Serial.println("");
+  }
 
-}
-
-void print_calibration() {
-  Serial.println("< calibration parameters >");
-  Serial.println("accel bias [g]: ");
-  Serial.print(mpu.getAccBiasX() * 1000.f / (float)MPU9250::CALIB_ACCEL_SENSITIVITY);
-  Serial.print(", ");
-  Serial.print(mpu.getAccBiasY() * 1000.f / (float)MPU9250::CALIB_ACCEL_SENSITIVITY);
-  Serial.print(", ");
-  Serial.print(mpu.getAccBiasZ() * 1000.f / (float)MPU9250::CALIB_ACCEL_SENSITIVITY);
-  Serial.println();
-  Serial.println("gyro bias [deg/s]: ");
-  Serial.print(mpu.getGyroBiasX() / (float)MPU9250::CALIB_GYRO_SENSITIVITY);
-  Serial.print(", ");
-  Serial.print(mpu.getGyroBiasY() / (float)MPU9250::CALIB_GYRO_SENSITIVITY);
-  Serial.print(", ");
-  Serial.print(mpu.getGyroBiasZ() / (float)MPU9250::CALIB_GYRO_SENSITIVITY);
-  Serial.println();
-  Serial.println("mag bias [mG]: ");
-  Serial.print(mpu.getMagBiasX());
-  Serial.print(", ");
-  Serial.print(mpu.getMagBiasY());
-  Serial.print(", ");
-  Serial.print(mpu.getMagBiasZ());
-  Serial.println();
-  Serial.println("mag scale []: ");
-  Serial.print(mpu.getMagScaleX());
-  Serial.print(", ");
-  Serial.print(mpu.getMagScaleY());
-  Serial.print(", ");
-  Serial.print(mpu.getMagScaleZ());
-  Serial.println();
 }

@@ -12,6 +12,7 @@ const wss = new WebSocket.Server({
 });
 
 var read_data = []
+let send_ws
 // สร้าง websockets server ที่ port 4000
 wss.on('connection', function connection(ws, req) { // สร้าง connection
     const ip = req.socket.remoteAddress;
@@ -26,10 +27,9 @@ wss.on('connection', function connection(ws, req) { // สร้าง connectio
     //ws.send('init message to client');
     // ส่ง data ไปที่ client เชื่อมกับ websocket server นี้
 
-    setInterval(() => {
-        //console.log('sending to data to client:', read_data)
-        ws.send(JSON.stringify(read_data))
-    }, 10)
+    send_ws = (data) => {
+	ws.send(JSON.stringify(data))
+    }
 });
 
 const express = require('express')
@@ -54,18 +54,16 @@ app.listen(argv.web_port, () => {
     console.log(`Example app listening at http://localhost:${argv.web_port}`)
 })
 
-if (argv.ino | argv.ino === undefined | argv.ino_port) {
-	const ad_port = new serialport(argv.ino_port, {
-	    baudRate: 115200
-	});
+const arduino_setup = (ino_port) => {
+	const ad_port = new serialport(ino_port, {
+		baudRate: 115200
+	})
 	const parser = ad_port.pipe(new Readline({
-	    delimiter: '\r\n' 
-	}));
-
+		delimiter: '\r\n'
+	}))
 	ad_port.on("open", () => {
-	    console.log('serial port open');
-	});
-
+		console.log('serial port open')
+	})
 	parser.on('data', data => {
 	    console.log(data);
 	    try {

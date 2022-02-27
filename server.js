@@ -65,13 +65,10 @@ const arduino_setup = (ino_port) => {
 		console.log('serial port open')
 	})
 	parser.on('data', data => {
-		try {
-			read_data = JSON.parse(data)
-			send_ws(read_data)
-		} catch (e) {}
-	})
-}
-
-if (argv.ino | argv.ino === undefined | argv.ino_port) {
-	arduino_setup(argv.ino_port)
+	    console.log(data);
+	    try {
+		read_data = JSON.parse(data);
+	    } catch (e) {}
+	    //console.log("read_data", read_data);
+	});
 }

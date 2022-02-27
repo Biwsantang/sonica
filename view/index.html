@@ -17,7 +17,12 @@
         import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.120.1/examples/jsm/controls/OrbitControls.js';
 
         const scene = new THREE.Scene();
+        scene.background = new THREE.Color("rgb(255, 255, 255)");
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        const directionalLight = new THREE.DirectionalLight( 0xffffff, 1 );
+        directionalLight.position.set(50,50,50)
+        scene.add(directionalLight)
 
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -26,28 +31,30 @@
         const controls = new OrbitControls(camera, renderer.domElement)
         controls.enableDamping = true
 
-	var model;
+        var model;
 
         const loader = new STLLoader()
         loader.load(
             'models/Ultrasonic_sensor_triple_mount.stl',
             function (geometry) {
-                const material = new THREE.MeshBasicMaterial({
-                    color: 0x0000ff
+                const material = new THREE.MeshStandardMaterial({
+                    color: 0xffffff
                 });
-                const mesh = new THREE.Mesh(geometry, material)
-                mesh.rotation.x = 135
-                mesh.position.x = 0
-                mesh.position.y = -5
-                mesh.position.z = 2
-                mesh.scale.x = 0.1
-                mesh.scale.y = 0.1
-                mesh.scale.z = 0.1
-                scene.add(mesh)
+                model = new THREE.Mesh(geometry, material)
+                model.rotation.x = THREE.MathUtils.degToRad(0)
+                model.rotation.y = THREE.MathUtils.degToRad(0)
+                model.rotation.z = THREE.MathUtils.degToRad(0)
+                model.position.x = 0
+                model.position.y = 0
+                model.position.z = 2
+                model.scale.x = 0.1
+                model.scale.y = 0.1
+                model.scale.z = 0.1
+                scene.add(model)
 
-		console.log(mesh);
-		model = mesh;	
-		console.log(model);
+                console.log(model);
+                //model = mesh;
+                //console.log(model);
             },
             (xhr) => {
                 console.log((xhr.loaded / xhr.total) * 100 + '% loaded')
@@ -57,10 +64,14 @@
             }
         )
 
-        const geometry = new THREE.BoxGeometry();
+        const geometry = new THREE.SphereGeometry();
         const material = new THREE.MeshBasicMaterial({
-            color: 0x00ff00
+            color: 0x007bff
         });
+
+        const size = 100; const divisions = 10; const color_grid = new THREE.Color( 0xf2f2f7 );
+        const gridHelper_XY = new THREE.GridHelper( size, divisions, color_grid, color_grid ); scene.add( gridHelper_XY );
+        const gridHelper_YZ = new THREE.GridHelper( size, divisions, color_grid, color_grid ); gridHelper_YZ.rotation.z = THREE.MathUtils.degToRad(90); gridHelper_YZ.rotation.x = THREE.MathUtils.degToRad(90); scene.add( gridHelper_YZ );
 
         const cube = [new THREE.Mesh(geometry, material), new THREE.Mesh(geometry, material), new THREE.Mesh(geometry,
             material)];
@@ -69,51 +80,66 @@
         scene.add(cube[1]);
         scene.add(cube[2]);
 
-        const white = new THREE.LineDashedMaterial({
-	        color: 0xffffff
+        const black = new THREE.LineDashedMaterial({
+            color: 0x8e8e93
         });
 
-	const line_geometry = [new THREE.Geometry(), new THREE.Geometry(), new THREE.Geometry()];
+        const line_geometry = [new THREE.Geometry(), new THREE.Geometry(), new THREE.Geometry()];
 
-        const line = [new THREE.Line( line_geometry[0], white ), new THREE.Line( line_geometry[1], white ), new THREE.Line( line_geometry[2], white )];
+        const line = [new THREE.Line(line_geometry[0], black), new THREE.Line(line_geometry[1], black), new THREE.Line(line_geometry[2], black)];
 
-        scene.add( line[0] );
-	scene.add( line[1] );
-	scene.add( line[2] );
+        scene.add(line[0]);
+        scene.add(line[1]);
+        scene.add(line[2]);
 
 
         camera.position.z = 50;
 
-	var kf_L = new KalmanFilter();
-	var kf_C = new KalmanFilter();
-	var kf_R = new KalmanFilter();
+        var kf_L = new KalmanFilter();
+        var kf_C = new KalmanFilter();
+        var kf_R = new KalmanFilter();
+
+        var x = 90
+
+        var sensor_offset = [270,0,0]
 
         const animate = function () {
             requestAnimationFrame(animate);
 
-	    var cube_L = kf_L.filter(server_cube[0] > 200 ? 200 : server_cube[0])
-	    console.log(cube_L)
-            cube[0].position.x = cube_L * Math.sin(Math.PI * 2 * -45 / 360) - 4.5;
-            cube[0].position.y = cube_L * Math.cos(Math.PI * 2 * -45 / 360) - 2;
+            var cube_L = kf_L.filter(server_cube[0] > 200 ? 200 : server_cube[0])
+            //console.log(cube_L)
+            cube[0].position.x = cube_L * (Math.sin(model.rotation.z + THREE.MathUtils.degToRad(45)) * Math.cos(model.rotation.x + THREE.MathUtils.degToRad(x))); //-4.5
+            cube[0].position.y = cube_L * (Math.sin(model.rotation.z + THREE.MathUtils.degToRad(45)) * Math.sin(model.rotation.x + THREE.MathUtils.degToRad(x))); //-2
+            cube[0].position.z = cube_L * Math.cos(model.rotation.z + THREE.MathUtils.degToRad(45));
 
-	    var cube_C = kf_C.filter(server_cube[1] > 200 ? 200 : server_cube[1])
-	    console.log(cube_C)
-            cube[1].position.x = cube_C * Math.sin(Math.PI * 2 * 0 / 360);
-            cube[1].position.y = cube_C * Math.cos(Math.PI * 2 * 0 / 360);
+            var cube_C = kf_C.filter(server_cube[1] > 200 ? 200 : server_cube[1])
+            //console.log(cube_C)
+            cube[1].position.x = cube_C * (Math.sin(model.rotation.z) * Math.cos(model.rotation.x + THREE.MathUtils.degToRad(x)));
+            cube[1].position.y = cube_C * (Math.sin(model.rotation.z) * Math.sin(model.rotation.x + THREE.MathUtils.degToRad(x)));
+            cube[1].position.z = cube_C * Math.cos(model.rotation.z + THREE.MathUtils.degToRad(0));
 
-	    var cube_R = kf_R.filter(server_cube[2] > 200 ? 200 : server_cube[2])
-	    console.log(cube_R)
-            cube[2].position.x = cube_R * Math.sin(Math.PI * 2 * 45 / 360) + 4.5;
-            cube[2].position.y = cube_R * Math.cos(Math.PI * 2 * 45 / 360) - 2;
+            var cube_R = kf_R.filter(server_cube[2] > 200 ? 200 : server_cube[2])
+            //console.log(cube_R)
+            cube[2].position.x = cube_R * (Math.sin(model.rotation.z + THREE.MathUtils.degToRad(-45)) * Math.cos(model.rotation.x + THREE.MathUtils.degToRad(x))); //-4.5
+            cube[2].position.y = cube_R * (Math.sin(model.rotation.z + THREE.MathUtils.degToRad(-45)) * Math.sin(model.rotation.x + THREE.MathUtils.degToRad(x))); //-2
+            cube[2].position.z = cube_R * Math.cos(model.rotation.z + THREE.MathUtils.degToRad(-45));
+            // 4.5
+            // -2
 
-	    for (const i of line_geometry.keys()) {
-		    line_geometry[i].vertices.push(
-			cube[i].position,
-			model.position			
-		    );
-		    line_geometry[i].verticesNeedUpdate = true;
-	    }
+            for (const i of line_geometry.keys()) {
+                line_geometry[i].vertices.push(
+                    cube[i].position,
+                    //model.position
+                    //new THREE.Vector3(-6.25 * Math.sin(Math.PI * 2 * THREE.MathUtils.radToDeg(model.rotation.z) / 360), -6.25 * Math.cos(Math.PI * 2 * THREE.MathUtils.radToDeg(model.rotation.z) / 360), model.position.z) //-6.25
+                    //new THREE.Vector3(model.position.x, model.position.y, model.position.z)
+                    model.position
+                );
+                line_geometry[i].verticesNeedUpdate = true;
+            }
 
+            model.rotation.x = THREE.MathUtils.degToRad(rotate[0] - s_rotate[0] + sensor_offset[0]); //roll
+            model.rotation.y = THREE.MathUtils.degToRad((rotate[1] - s_rotate[1]) + sensor_offset[1]); //pitch
+            model.rotation.z = THREE.MathUtils.degToRad((rotate[2] - s_rotate[2]) + sensor_offset[2]); //yaw
 
             renderer.render(scene, camera);
         };

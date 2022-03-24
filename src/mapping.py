@@ -3,71 +3,35 @@
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
-import numpy as np
 from scipy.io import loadmat
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import matplotlib
 import math
 from tqdm import tqdm
-from crazyslam.mapping import *
+import argparse
 
-def bresenham_line(start, end):
-    """Find the cells that should be selected to form a straight line
+from inject import *
 
-    Use scikit-image implementation of the Bresenham line algorithm
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--map_resolution",
+    default=10,
+    help="Number of cells to subdivide 1 meter into",
+)
+parser.add_argument(
+    "--data",
+    type=argparse.FileType('r'),
+    default="../data/receive/1_real_robot.mat",
+    help="data file to plot as occupancy map"
+)
 
-    Args:
-        start: (x, y) INDEX coordinates of the starting point
-        end: ((x, y), n) INDEX coordinates of the ending points
+def main():
 
-    Returns:
-        List of (x, y) INDEX coordinates that form the straight lines
-    """
-    path = list()
-    for target in end.T:  # TODO: delete for loop
-        tmp = bresenham(start[0], start[1], target[0], target[1])
-        path += (list(zip(tmp[0], tmp[1]))[1:-1])  # start + end points removed
-    return path
-
-def update_grid_map(grid, ranges, angles, state, params):
-    """Update the grid map given a new set on sensor data
-
-    Args:
-        grid: Grid map to be updated
-        ranges: Set of range inputs from the sensor
-        angles: Angles at which the range points are captured
-        state: State estimate (x, y, yaw)
-        params: Parameters dictionary
-
-    Returns:
-        Updated occupancy grid map
-    """
-    LOG_ODD_MAX = 4 #100
-    LOG_ODD_MIN = -2 #-50
-    LOG_ODD_OCCU = 1 #1
-    LOG_ODD_FREE = 0.3 #0.3
-
-    # compute the measured position
-    targets = target_cell(state, ranges, angles)
-    targets = discretize(targets, params)
-
-    # find the affected cells
-    position = discretize(state[:2], params)
-    cells = bresenham_line(position.reshape(2), targets)
-
-    # update log odds
-    grid[tuple(np.array(cells).T)] -= LOG_ODD_FREE
-    grid[targets[0], targets[1]] += LOG_ODD_OCCU
-    grid[position[0], position[1]] = LOG_ODD_MIN  # LOG_ODD_FREE
-
-
-    return np.clip(grid, a_max=LOG_ODD_MAX, a_min=LOG_ODD_MIN)
-
-def run():
     # Use a breakpoint in the code line below to debug your script.
 
-    data = loadmat("../data/receive/62_real_robot.mat")
+    args = parser.parse_args()
+
+    data = loadmat(args.data.name)
     states = np.array(data["pose"])
     ranges = np.array(data["ranges"])
     angles = np.array(data["scanAngles"])
@@ -105,7 +69,7 @@ def run():
 
     ranges = ranges * 0.01
 
-    params = init_params_dict(5, 100)
+    params = init_params_dict(10, args.map_resolution)
     occupancy_grid = create_empty_map(params)
 
     idx_pose = discretize(states[:2, :], params)
@@ -139,6 +103,6 @@ def run():
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    run()
+    main()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

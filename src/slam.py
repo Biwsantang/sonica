@@ -5,48 +5,37 @@
 
 from tqdm import tqdm
 from scipy.io import loadmat
-import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib
 import math
 from crazyslam.slam import SLAM
 from crazyslam.localization import get_state_estimate
-from crazyslam.mapping import *
+import argparse
 
-def update_grid_map(grid, ranges, angles, state, params):
-    """Update the grid map given a new set on sensor data
+from inject import *
 
-    Args:
-        grid: Grid map to be updated
-        ranges: Set of range inputs from the sensor
-        angles: Angles at which the range points are captured
-        state: State estimate (x, y, yaw)
-        params: Parameters dictionary
+from compare import *
 
-    Returns:
-        Updated occupancy grid map
-    """
-    LOG_ODD_MAX = 100 #100
-    LOG_ODD_MIN = -50 #-50
-    LOG_ODD_OCCU = 1 #1
-    LOG_ODD_FREE = 0.3 #0.3
-
-    # compute the measured position
-    targets = target_cell(state, ranges, angles)
-    targets = discretize(targets, params)
-
-    # find the affected cells
-    position = discretize(state[:2], params)
-    cells = bresenham_line(position.reshape(2), targets)
-
-    # update log odds
-    grid[tuple(np.array(cells).T)] -= LOG_ODD_FREE
-    grid[targets[0], targets[1]] += LOG_ODD_OCCU
-    grid[position[0], position[1]] = LOG_ODD_MIN #LOG_ODD_FREE
-
-    return np.clip(grid, a_max=LOG_ODD_MAX, a_min=LOG_ODD_MIN)
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    "--map_resolution",
+    default=10,
+    help="Number of cells to subdivide 1 meter into",
+)
+parser.add_argument(
+    "--n_particle",
+    default=1000,
+    help="Number of particles in the particle filter",
+)
+parser.add_argument(
+    "--data",
+    type=argparse.FileType('r'),
+    default="../data/receive/1_real_robot.mat",
+    help="data file to plot as occupancy map"
+)
 
 class newSLAM(SLAM):
+    def view_particles(self):
+        return self.particles
     def update_state(self, ranges, angles, motion_update):
         """
         Update state estimate. One iteration of the SLAM algorithm
@@ -89,7 +78,9 @@ class newSLAM(SLAM):
 def run():
     # Use a breakpoint in the code line below to debug your script.
 
-    data = loadmat("../data/2x2_straight_w_curve.mat")
+    args = parser.parse_args()
+
+    data = loadmat(args.data.name)
     states = np.array(data["pose"])
     ranges = np.array(data["ranges"])
     angles = np.array(data["scanAngles"])
@@ -121,10 +112,10 @@ def run():
     # end
 
     states[0] = states[0] * 1
-    states[1] = states[1] * 1
+    states[1] = states[1] * -1
     states[2] = (states[2] - math.radians(90))
 
-    #ranges = ranges * 0.01
+    ranges = ranges * 0.01
 
     # add noise to the ground truth
     motion_updates = np.diff(states, axis=1, prepend=np.zeros((3, 1)))
@@ -142,10 +133,12 @@ def run():
     ], axis=0)
     motion_updates += noise
     states_noise = np.cumsum(motion_updates, axis=1)
+    motion_updates[2, 0] = 0
+
 
     # Useful values
 
-    system_noise_variance = np.diag([0.01, 0.01, 0.01]) #0.2
+    system_noise_variance = np.diag([0.000002, 0.000002, 0.000002]) #0.000002
     correlation_matrix = np.array([
         [0, -1],
         [-1, 10], #10
@@ -156,17 +149,17 @@ def run():
 
     # Init the SLAM agent
     slam_agent = newSLAM(
-        params=init_params_dict(size=5, resolution=10),
-        n_particles=int(5000),
+        params=init_params_dict(size=10, resolution=args.map_resolution),
+        n_particles=int(args.n_particle),
         current_state=states_noise[:, 0],
         system_noise_variance=system_noise_variance,
         correlation_matrix=correlation_matrix,
     )
 
-    params = init_params_dict(5, 10)
+    params = init_params_dict(10, 10)
     occupancy_grid = create_empty_map(params)
 
-    for t in tqdm(range(states_noise.shape[1])): #states_noise.shape[1]
+    for t in tqdm(range(1,states_noise.shape[1])): #states_noise.shape[1]
         slam_states[:, t] = slam_agent.update_state(
             ranges[:, t],
             angles,
@@ -198,6 +191,8 @@ def run():
     ax[2].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
     ax[2].legend()
     plt.show()
+
+    print(compare_map(slam_map,occupancy_grid))
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

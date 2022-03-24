@@ -132,7 +132,6 @@ void stopMotorLeft() {
   digitalWrite(LM_AR, LOW);
   //analogWrite(LM_EN, 0);
   ledcWrite(pwmChannelLeft, 0);
-  isMotorLeft_forward = 0;
 }
 
 void stopMotorRight() {
@@ -140,22 +139,18 @@ void stopMotorRight() {
   digitalWrite(RM_AR, LOW);
   //analogWrite(RM_EN, 0);
   ledcWrite(pwmChannelRight, 0);
-  isMotorRight_forward = 0;
 }
 
 void stopMotor() {
   
-  counter_A = ps_values[0]; //set counter 0 to stop Motor A
-  counter_B = ps_values[1]; //set counter 1 to stop Motor B
+  stopMotorLeft();
+  stopMotorRight();
   
 }
 
 // steps Motor
 
-void MoveForward(int stepsL, int stepsR, int speedL, int speedR) {
-
-  counter_A = ps_values[0] + stepsL;
-  counter_B = ps_values[1] + stepsR;
+void MoveForward(int speedL, int speedR) {
 
   isMotorLeft_forward = 1;
   isMotorRight_forward = 1;
@@ -165,10 +160,7 @@ void MoveForward(int stepsL, int stepsR, int speedL, int speedR) {
 
 }
 
-void MoveBackward(int stepsL, int stepsR, int speedL, int speedR) {
-
-  counter_A = ps_values[0] - stepsL;
-  counter_B = ps_values[1] - stepsR;
+void MoveBackward(int speedL, int speedR) {
 
   isMotorLeft_forward = -1;
   isMotorRight_forward = -1;
@@ -178,10 +170,7 @@ void MoveBackward(int stepsL, int stepsR, int speedL, int speedR) {
   
 }
 
-void turnLeft(int stepsL, int stepsR, int speedL, int speedR) {
-
-  counter_A = ps_values[0] - stepsL;
-  counter_B = ps_values[1] + stepsR;
+void turnLeft(int speedL, int speedR) {
 
   isMotorLeft_forward = -1;
   isMotorRight_forward = 1;
@@ -191,10 +180,7 @@ void turnLeft(int stepsL, int stepsR, int speedL, int speedR) {
 
 }
 
-void turnRight(int stepsL, int stepsR, int speedL, int speedR) {
-
-  counter_A = ps_values[0] + stepsL;
-  counter_B = ps_values[1] - stepsR;
+void turnRight(int speedL, int speedR) {
 
   isMotorLeft_forward = 1;
   isMotorRight_forward = -1;
@@ -208,8 +194,6 @@ void devicesMove() {
 
   int speedL = 0;
   int speedR = 0;
-  int stepsL = 0;
-  int stepsR = 0;
   int steps_direction = 0;
   
   if (server.hasArg("speedL")) {
@@ -217,12 +201,6 @@ void devicesMove() {
   }
   if (server.hasArg("speedR")) {
     speedR = server.arg("speedR").toInt();
-  }
-  if (server.hasArg("stepsL")) {
-    stepsL = server.arg("stepsL").toInt();
-  }
-  if (server.hasArg("stepsR")) {
-    stepsR = server.arg("stepsR").toInt();
   }
   if (server.hasArg("steps_direction")) {
     steps_direction = server.arg("steps_direction").toInt();
@@ -235,16 +213,14 @@ void devicesMove() {
    * 4 - right
    */
 
-  stopMotor();
-
   if (steps_direction == 1) {
-    turnLeft(stepsL, stepsR, speedL, speedR);
+    turnLeft(speedL, speedR);
   } else if (steps_direction == 2) {
-    MoveBackward(stepsL, stepsR, speedL, speedR);
+    MoveBackward(speedL, speedR);
   } else if (steps_direction == 3) {
-    MoveForward(stepsL, stepsR, speedL, speedR);
+    MoveForward(speedL, speedR);
   } else if (steps_direction == 4) {
-    turnRight(stepsL, stepsR, speedL, speedR);
+    turnRight(speedL, speedR);
   } else {
     stopMotor();
   }
@@ -260,8 +236,6 @@ void devicesStop() {
 void devicesResetEncoder() {
   stopMotor();
   
-  counter_A = 0;
-  counter_B = 0;
   ps_values[0] = 0;
   ps_values[1] = 0;
   last_ps_values[0] = 0;
@@ -275,42 +249,30 @@ void devicesResetEncoder() {
 
 // Motor 1 pulse count ISR
 void ISR_countLeft() {
-  if (digitalRead (MOTORLEFT) && (micros() - debouncel > 500) && digitalRead (MOTORLEFT) ) {
+  if (!digitalRead (MOTORLEFT) && (micros() - debouncel > 500) && !digitalRead (MOTORLEFT) ) {
     // Check again that the encoder sends a good signal and then check that the time is greater than 500 microseconds and check again that the signal is correct.
     debouncel = micros(); // Store the time to check that we do not count the rebound in the signal.
     //check if motor A pass next position
-    if (counter_A != ps_values[0]) {
-      if (isMotorLeft_forward == 1) {
+    if (isMotorLeft_forward == 1) {
         ps_values[0] = ps_values[0] + 1;
-      } else if (isMotorLeft_forward == -1) {
+    } else if (isMotorLeft_forward == -1) {
         ps_values[0] = ps_values[0] - 1;
-      }
-    } else {
-      stopMotorLeft();
-      stopMotorRight();
-      stopMotor();
     }
-  }  // Add the good pulse that enters.
+}
   else ;
 }
 
 // Motor 2 pulse count ISR
 void ISR_countRight() {
-  if (digitalRead (MOTORRIGHT) && (micros() - debouncel > 500) && digitalRead (MOTORRIGHT) ) {
+  if (!digitalRead (MOTORRIGHT) && (micros() - debouncel > 500) && !digitalRead (MOTORRIGHT) ) {
     debouncer = micros();
     // check if motor B pass next position
-    if (counter_B != ps_values[1]) {
-      if (isMotorRight_forward == 1) {
+    if (isMotorRight_forward == 1) {
         ps_values[1] = ps_values[1] + 1;
-      } else if (isMotorRight_forward == -1) {
+    } else if (isMotorRight_forward == -1) {
         ps_values[1] = ps_values[1] - 1;
-      }
-    } else {
-      stopMotorLeft();
-      stopMotorRight();
-      stopMotor();
     }
-  }
+}
   else ;
 }
 
@@ -340,8 +302,7 @@ void odemetry() {
   v = (dist_values[0] + dist_values[1]) / 2.0;
   w = (dist_values[0] - dist_values[1]) / distance_between_wheels;
 
-  //robot_pose[2] += (w * dt); // w*dt
-  robot_pose[2] = (gZ) * 3.141592 / 180.0;
+  robot_pose[2] += (w * dt); // w*dt
 
   vx = v * cos(robot_pose[2]);
   vy = v * sin(robot_pose[2]);
@@ -395,8 +356,8 @@ void setup() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  attachInterrupt(digitalPinToInterrupt (MOTORLEFT), ISR_countLeft, RISING);  // Increase counter 1 when speed sensor pin goes High
-  attachInterrupt(digitalPinToInterrupt (MOTORRIGHT), ISR_countRight, RISING);  // Increase counter 2 when speed sensor pin goes High
+  attachInterrupt(digitalPinToInterrupt (MOTORLEFT), ISR_countLeft, FALLING);  // Increase counter 1 when speed sensor pin goes High
+  attachInterrupt(digitalPinToInterrupt (MOTORRIGHT), ISR_countRight, FALLING);  // Increase counter 2 when speed sensor pin goes High
   Serial.println("- Attach Interrupt");
 
   ledcSetup(pwmChannelRight, freq, resolution);
@@ -417,27 +378,8 @@ void setup() {
 
   server.begin();
   Serial.println("HTTP server started");
-
+  
   client.setServer(MQTT_SERVER, MQTT_PORT);
-
-  Wire.begin();
-
-  if (!mpu.setup(0x68)) {  // change to your own address
-        while (1) {
-            Serial.println("MPU connection failed. Please check your connection with `connection_check` example.");
-            delay(5000);
-        }
-  }
-
-  
-  mpu.calibrateAccelGyro();
-  
-  moveForwardMotorLeft(255);
-  delay(1000);
-  
-  mpu.calibrateMag();
-
-  Serial.println("Finish");
 
   while (!client.connected()) {
     Serial.println("Connecting to MQTT...");
@@ -459,10 +401,6 @@ void loop() {
   client.loop();
   server.handleClient();
 
-  if(mpu.update()) {
-    gZ = (float)mpu.getYaw();
-  }
-
   if (millis() > prev_ms + 33) {
     //Serial.print(count);
     //Serial.print("=");
@@ -479,19 +417,19 @@ void loop() {
     }
   
     odemetry();
-  
-    Serial.print("gZ : ");
-    Serial.print(gZ);
 
-    Serial.print("robot pose 0 : ");
-    Serial.print(robot_pose[0]);
-
-    Serial.print("robot pose 1 : ");
-    Serial.print(robot_pose[1]);
-
-    Serial.print("robot pose 2 : ");
-    Serial.print(robot_pose[2]);
+    Serial.print("ps_values 0 : ");
+    Serial.print(ps_values[0]);
     
+    Serial.print("ps_values 0 : ");
+    Serial.print(digitalRead (MOTORLEFT));
+
+    Serial.print("ps_values 1 : ");
+    Serial.print(ps_values[1]);
+    
+    Serial.print("ps_values 1 : ");
+    Serial.print(digitalRead (MOTORRIGHT));
+        
     Serial.println("");
 
   }

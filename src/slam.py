@@ -20,32 +20,38 @@ from compare import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
+    "-m",
     "--map_resolution",
     default=10,
     help="Number of cells to subdivide 1 meter into",
 )
 parser.add_argument(
+    "-n",
     "--n_particle",
     default=1000,
     help="Number of particles in the particle filter",
 )
 parser.add_argument(
+    "-d",
     "--data",
     type=argparse.FileType('r'),
     default="../data/receive/120_real_robot.mat",
     help="data file to plot as occupancy map"
 )
 parser.add_argument(
+    "-g",
     "--graph",
     action='store_true'
 )
 parser.add_argument(
+    "-op",
     "--origin_position",
     nargs='+',
     type=int,
     required=True
 )
 parser.add_argument(
+    "-or",
     "--origin_rotate",
     default=0,
     type=int

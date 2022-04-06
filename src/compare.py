@@ -3,7 +3,17 @@ import numpy as np
 from PIL import Image
 from matplotlib import cm, pyplot as plt
 from sewar.full_ref import msssim, mse
-import scipy.ndimage as ndi
+from scipy import ndimage
+
+def test_morph(map1):
+    kernel1 = np.ones((3,3), np.uint8)
+    kernel2 = np.ones((3,3), np.uint8)
+
+    #image1 = NormalizeData(map1) * 255
+    map1 = cv2.erode(map1, kernel1, iterations=1)
+    map1 = cv2.dilate(map1, kernel2, iterations=1)
+
+    plt.imshow(map1,cmap='gray')
 
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))

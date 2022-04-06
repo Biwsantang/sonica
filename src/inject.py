@@ -13,8 +13,8 @@ def update_grid_map(grid, ranges, angles, state, params):
     Returns:
         Updated occupancy grid map
     """
-    LOG_ODD_MAX = 10 #100
-    LOG_ODD_MIN = -5 #-50
+    LOG_ODD_MAX = 100 #100
+    LOG_ODD_MIN = -50 #-50
     LOG_ODD_OCCU = 1 #1
     LOG_ODD_FREE = 0.3 #0.3
 

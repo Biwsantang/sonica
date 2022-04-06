@@ -8,6 +8,8 @@ crazyslam = {path = "./lib/CrazySLAM-master"}
 ujson = "*"
 paho-mqtt = "*"
 opencv-python = "*"
+piqa = "*"
+sewar = "*"
 
 [dev-packages]
 

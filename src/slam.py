@@ -10,6 +10,9 @@ import math
 from crazyslam.slam import SLAM
 from crazyslam.localization import get_state_estimate
 import argparse
+import numpy as np
+
+from scipy import ndimage
 
 from inject import *
 
@@ -29,8 +32,23 @@ parser.add_argument(
 parser.add_argument(
     "--data",
     type=argparse.FileType('r'),
-    default="../data/receive/1_real_robot.mat",
+    default="../data/receive/120_real_robot.mat",
     help="data file to plot as occupancy map"
+)
+parser.add_argument(
+    "--graph",
+    action='store_true'
+)
+parser.add_argument(
+    "--origin_position",
+    nargs='+',
+    type=int,
+    required=True
+)
+parser.add_argument(
+    "--origin_rotate",
+    default=0,
+    type=int
 )
 
 class newSLAM(SLAM):
@@ -149,14 +167,14 @@ def run():
 
     # Init the SLAM agent
     slam_agent = newSLAM(
-        params=init_params_dict(size=10, resolution=args.map_resolution),
+        params=init_params_dict(size=4, resolution=args.map_resolution),
         n_particles=int(args.n_particle),
         current_state=states_noise[:, 0],
         system_noise_variance=system_noise_variance,
         correlation_matrix=correlation_matrix,
     )
 
-    params = init_params_dict(10, 10)
+    params = init_params_dict(4, 10)
     occupancy_grid = create_empty_map(params)
 
     for t in tqdm(range(1,states_noise.shape[1])): #states_noise.shape[1]
@@ -177,22 +195,61 @@ def run():
     idx_slam = discretize(slam_states[:2, :], slam_agent.params)
     idx_noise = discretize(states_noise[:2, :], slam_agent.params)
 
-    fig, ax = plt.subplots(1, 3)
-    ax[0].imshow(slam_map, cmap="gray")
-    ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
-    ax[0].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
-    ax[0].legend()
+    groundTruth_raw = np.genfromtxt('../data/receive/groundTruth.csv', delimiter=',')
+    groundTruth_raw = np.flip(groundTruth_raw,1)
+    groundTruth_raw = ndimage.rotate(groundTruth_raw, args.origin_rotate)
+    groundTruth = np.zeros((40, 40))
+    offset = np.array((args.origin_position[0]-7, args.origin_position[1]-7)) #19, 12
+    groundTruth[offset[0]:offset[0] + groundTruth_raw.shape[0], offset[1]:offset[1] + groundTruth_raw.shape[1]] = groundTruth_raw
 
-    ax[1].imshow(occupancy_grid, cmap="gray")
-    ax[1].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
-    ax[1].legend()
+    slam_map[slam_map >= 50] = 100 #50
+    slam_map[slam_map <= -20] = -50 #-10
+    #slam_map[slam_map > -10 & slam_map < 50] = 0
+    slam_map[np.where((slam_map > -20) & (slam_map < 50))] = 0
 
-    ax[2].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
-    ax[2].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
-    ax[2].legend()
-    plt.show()
+    mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
 
-    print(compare_map(slam_map,occupancy_grid))
+    mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth)
+    mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
+
+    if (args.graph):
+        fig, ax = plt.subplots(1, 4)
+        ax[0].imshow(slam_map, cmap="gray")
+        ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
+        ax[0].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+        ax[0].legend()
+        ax[0].annotate("MSE| SLAM->OCCU_MAP:\n"
+                       "    {}\n"
+                       "MSE| SLAM->GROUND:\n"
+                       "    {}\n"
+                       "MSE| OCCU_MAP->GROUND:\n"
+                       "    {}\n"
+                       "MS_SSIM| SLAM->OCCU_MAP:\n"
+                       "    {}%\n"
+                       "MS_SSIM| SLAM->GROUND:\n"
+                       "    {}%\n"
+                       "MS_SSIM| OCCU_MAP->GROUND:\n"
+                       "    {}%\n"
+                       .format(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100),[0,-5],annotation_clip=False)
+        ax[0].set_title("SLAM")
+
+        #"""
+        ax[1].imshow(occupancy_grid, cmap="gray")
+        ax[1].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+        #ax[1].legend()
+        ax[1].set_title("OCCUPANCY")
+
+        ax[2].imshow(groundTruth, cmap="gray")
+        #ax[2].legend()
+        ax[2].set_title("GROUND TRUTH")
+
+        ax[3].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
+        ax[3].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
+        #ax[3].legend()
+        #"""
+        plt.show()
+
+    print(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

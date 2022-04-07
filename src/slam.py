@@ -104,7 +104,7 @@ class newSLAM(SLAM):
         )
         return self.current_state
 
-def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,flip):
+def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,flip,disable_bar=False):
     # Use a breakpoint in the code line below to debug your script.
 
     data = loadmat(data.name)
@@ -186,7 +186,7 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     params = init_params_dict(4, 10)
     occupancy_grid = create_empty_map(params)
 
-    for t in tqdm(range(1,states_noise.shape[1])): #states_noise.shape[1]
+    for t in tqdm(range(1,states_noise.shape[1]),disable=disable_bar): #states_noise.shape[1]
         slam_states[:, t] = slam_agent.update_state(
             ranges[:, t],
             angles,

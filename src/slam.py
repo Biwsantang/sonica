@@ -48,13 +48,18 @@ parser.add_argument(
     "--origin_position",
     nargs='+',
     type=int,
-    required=True
+    default=(26,19)
 )
 parser.add_argument(
     "-or",
     "--origin_rotate",
     default=0,
     type=int
+)
+parser.add_argument(
+    "-f",
+    "--flip",
+    action='store_true'
 )
 
 class newSLAM(SLAM):
@@ -99,7 +104,7 @@ class newSLAM(SLAM):
         )
         return self.current_state
 
-def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate):
+def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,flip):
     # Use a breakpoint in the code line below to debug your script.
 
     data = loadmat(data.name)
@@ -200,7 +205,8 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate)
     idx_noise = discretize(states_noise[:2, :], slam_agent.params)
 
     groundTruth_raw = np.genfromtxt('../data/receive/groundTruth.csv', delimiter=',')
-    groundTruth_raw = np.flip(groundTruth_raw,1)
+    if(flip!=True):
+        groundTruth_raw = np.flip(groundTruth_raw,1)
     groundTruth_raw = ndimage.rotate(groundTruth_raw, origin_rotate)
     groundTruth = np.zeros((40, 40))
     offset = np.array((origin_position[0]-7, origin_position[1]-7)) #19, 12
@@ -216,49 +222,52 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate)
     mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth)
     mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
 
+    fig, ax = plt.subplots(1, 4)
+    fig.set_size_inches(12, 12)
+    ax[0].imshow(slam_map, cmap="gray")
+    ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
+    ax[0].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+    ax[0].legend()
+    ax[0].annotate("MSE| SLAM->OCCU_MAP:\n"
+                   "    {}\n"
+                   "MSE| SLAM->GROUND:\n"
+                   "    {}\n"
+                   "MSE| OCCU_MAP->GROUND:\n"
+                   "    {}\n"
+                   "MS_SSIM| SLAM->OCCU_MAP:\n"
+                   "    {}%\n"
+                   "MS_SSIM| SLAM->GROUND:\n"
+                   "    {}%\n"
+                   "MS_SSIM| OCCU_MAP->GROUND:\n"
+                   "    {}%\n"
+                   .format(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100),[0,-5],annotation_clip=False)
+    ax[0].set_title("SLAM")
+
+    #"""
+    ax[1].imshow(occupancy_grid, cmap="gray")
+    ax[1].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+    #ax[1].legend()
+    ax[1].set_title("OCCUPANCY")
+
+    ax[2].imshow(groundTruth, cmap="gray")
+    #ax[2].legend()
+    ax[2].set_title("GROUND TRUTH")
+
+    ax[3].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
+    ax[3].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
+    #ax[3].legend()
+    #"""
+
     if (graph):
-        fig, ax = plt.subplots(1, 4)
-        ax[0].imshow(slam_map, cmap="gray")
-        ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
-        ax[0].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
-        ax[0].legend()
-        ax[0].annotate("MSE| SLAM->OCCU_MAP:\n"
-                       "    {}\n"
-                       "MSE| SLAM->GROUND:\n"
-                       "    {}\n"
-                       "MSE| OCCU_MAP->GROUND:\n"
-                       "    {}\n"
-                       "MS_SSIM| SLAM->OCCU_MAP:\n"
-                       "    {}%\n"
-                       "MS_SSIM| SLAM->GROUND:\n"
-                       "    {}%\n"
-                       "MS_SSIM| OCCU_MAP->GROUND:\n"
-                       "    {}%\n"
-                       .format(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100),[0,-5],annotation_clip=False)
-        ax[0].set_title("SLAM")
-
-        #"""
-        ax[1].imshow(occupancy_grid, cmap="gray")
-        ax[1].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
-        #ax[1].legend()
-        ax[1].set_title("OCCUPANCY")
-
-        ax[2].imshow(groundTruth, cmap="gray")
-        #ax[2].legend()
-        ax[2].set_title("GROUND TRUTH")
-
-        ax[3].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
-        ax[3].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
-        #ax[3].legend()
-        #"""
         plt.show()
 
-    return mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100
+    return fig ,(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    print(plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate))
+    fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,flip=args.flip)
+    print(result)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

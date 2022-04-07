@@ -107,7 +107,7 @@ class newSLAM(SLAM):
 def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,flip,disable_bar=False):
     # Use a breakpoint in the code line below to debug your script.
 
-    data = loadmat(data.name)
+    data = loadmat(data)
     states = np.array(data["pose"])
     ranges = np.array(data["ranges"])
     angles = np.array(data["scanAngles"])
@@ -261,13 +261,15 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     if (graph):
         plt.show()
 
+    plt.close()
+
     return fig ,(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100)
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
     args = parser.parse_args()
 
-    fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,flip=args.flip)
+    fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data.name,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,flip=args.flip)
     print(result)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

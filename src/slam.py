@@ -99,12 +99,10 @@ class newSLAM(SLAM):
         )
         return self.current_state
 
-def run():
+def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate):
     # Use a breakpoint in the code line below to debug your script.
 
-    args = parser.parse_args()
-
-    data = loadmat(args.data.name)
+    data = loadmat(data.name)
     states = np.array(data["pose"])
     ranges = np.array(data["ranges"])
     angles = np.array(data["scanAngles"])
@@ -173,8 +171,8 @@ def run():
 
     # Init the SLAM agent
     slam_agent = newSLAM(
-        params=init_params_dict(size=4, resolution=args.map_resolution),
-        n_particles=int(args.n_particle),
+        params=init_params_dict(size=4, resolution=map_resolution),
+        n_particles=int(n_particle),
         current_state=states_noise[:, 0],
         system_noise_variance=system_noise_variance,
         correlation_matrix=correlation_matrix,
@@ -203,9 +201,9 @@ def run():
 
     groundTruth_raw = np.genfromtxt('../data/receive/groundTruth.csv', delimiter=',')
     groundTruth_raw = np.flip(groundTruth_raw,1)
-    groundTruth_raw = ndimage.rotate(groundTruth_raw, args.origin_rotate)
+    groundTruth_raw = ndimage.rotate(groundTruth_raw, origin_rotate)
     groundTruth = np.zeros((40, 40))
-    offset = np.array((args.origin_position[0]-7, args.origin_position[1]-7)) #19, 12
+    offset = np.array((origin_position[0]-7, origin_position[1]-7)) #19, 12
     groundTruth[offset[0]:offset[0] + groundTruth_raw.shape[0], offset[1]:offset[1] + groundTruth_raw.shape[1]] = groundTruth_raw
 
     slam_map[slam_map >= 50] = 100 #50
@@ -218,7 +216,7 @@ def run():
     mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth)
     mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
 
-    if (args.graph):
+    if (graph):
         fig, ax = plt.subplots(1, 4)
         ax[0].imshow(slam_map, cmap="gray")
         ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
@@ -255,10 +253,12 @@ def run():
         #"""
         plt.show()
 
-    print(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100)
+    return mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    run()
+    args = parser.parse_args()
+
+    print(plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate))
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

@@ -18,50 +18,6 @@ from inject import *
 
 from compare import *
 
-parser = argparse.ArgumentParser()
-parser.add_argument(
-    "-m",
-    "--map_resolution",
-    default=10,
-    help="Number of cells to subdivide 1 meter into",
-)
-parser.add_argument(
-    "-n",
-    "--n_particle",
-    default=1000,
-    help="Number of particles in the particle filter",
-)
-parser.add_argument(
-    "-d",
-    "--data",
-    type=argparse.FileType('r'),
-    default="../data/receive/120_real_robot.mat",
-    help="data file to plot as occupancy map"
-)
-parser.add_argument(
-    "-g",
-    "--graph",
-    action='store_true'
-)
-parser.add_argument(
-    "-op",
-    "--origin_position",
-    nargs='+',
-    type=int,
-    default=(26,19)
-)
-parser.add_argument(
-    "-or",
-    "--origin_rotate",
-    default=0,
-    type=int
-)
-parser.add_argument(
-    "-f",
-    "--flip",
-    action='store_true'
-)
-
 class newSLAM(SLAM):
     def view_particles(self):
         return self.particles
@@ -263,10 +219,55 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
 
     plt.close()
 
-    return fig ,(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100)
+    return fig ,[mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100]
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "-m",
+        "--map_resolution",
+        default=10,
+        help="Number of cells to subdivide 1 meter into",
+    )
+    parser.add_argument(
+        "-n",
+        "--n_particle",
+        default=1000,
+        help="Number of particles in the particle filter",
+    )
+    parser.add_argument(
+        "-d",
+        "--data",
+        type=argparse.FileType('r'),
+        default="../data/receive/120_real_robot.mat",
+        help="data file to plot as occupancy map"
+    )
+    parser.add_argument(
+        "-g",
+        "--graph",
+        action='store_true'
+    )
+    parser.add_argument(
+        "-op",
+        "--origin_position",
+        nargs='+',
+        type=int,
+        default=(26,19)
+    )
+    parser.add_argument(
+        "-or",
+        "--origin_rotate",
+        default=0,
+        type=int
+    )
+    parser.add_argument(
+        "-f",
+        "--flip",
+        action='store_true'
+    )
+
     args = parser.parse_args()
 
     fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data.name,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,flip=args.flip)

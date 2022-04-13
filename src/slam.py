@@ -169,9 +169,14 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     groundTruth[offset[0]:offset[0] + groundTruth_raw.shape[0], offset[1]:offset[1] + groundTruth_raw.shape[1]] = groundTruth_raw
 
     slam_map[slam_map >= 50] = 100 #50
-    slam_map[slam_map <= -20] = -50 #-10
+    slam_map[slam_map <= -25] = -50 #-10
     #slam_map[slam_map > -10 & slam_map < 50] = 0
-    slam_map[np.where((slam_map > -20) & (slam_map < 50))] = 0
+    slam_map[np.where((slam_map > -25) & (slam_map < 50))] = 0
+
+    slam_map = morph(slam_map)
+
+    occupancy_grid[np.round_(occupancy_grid) == 0] = -50
+    groundTruth[np.round_(groundTruth) == 0] = -50
 
     mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
 

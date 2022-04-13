@@ -3,7 +3,17 @@ import numpy as np
 from PIL import Image
 from matplotlib import cm, pyplot as plt
 from sewar.full_ref import msssim, mse
-import scipy.ndimage as ndi
+from scipy import ndimage
+
+def morph(map1):
+    kernel = np.ones((2,2), np.uint8)
+
+    #image1 = NormalizeData(map1) * 255
+    map1 = cv2.erode(map1, kernel, iterations=1)
+    map1 = cv2.dilate(map1, kernel, iterations=1)
+    map1 = cv2.morphologyEx(map1, cv2.MORPH_GRADIENT, kernel)
+
+    return map1
 
 def NormalizeData(data):
     return (data - np.min(data)) / (np.max(data) - np.min(data))

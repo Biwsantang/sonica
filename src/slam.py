@@ -213,7 +213,10 @@ def run():
     #slam_map[slam_map > -10 & slam_map < 50] = 0
     slam_map[np.where((slam_map > -25) & (slam_map < 50))] = 0
 
-    test_morph(slam_map)
+    slam_map = morph(slam_map)
+
+    occupancy_grid[np.round_(occupancy_grid) == 0] = -50
+    groundTruth[np.round_(groundTruth) == 0] = -50
 
     mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
 

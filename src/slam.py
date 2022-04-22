@@ -190,7 +190,7 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
 
     fig, ax = plt.subplots(1, 4)
-    fig.set_size_inches(12, 12)
+    fig.set_size_inches(8, 2)
     ax[3].imshow(slam_map, cmap="gray")
     ax[3].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
     ax[3].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")

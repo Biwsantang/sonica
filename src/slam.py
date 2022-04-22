@@ -240,7 +240,7 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
 
     plt.close()
 
-    return fig ,[mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100]
+    return fig ,[mse_occu_ground, mse_slam_map_b_post, mse_slam_ground, ssim_occu_ground.real*100, ssim_slam_map_b_post.real*100, ssim_slam_ground.real*100]
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':

@@ -3,7 +3,7 @@ import paho.mqtt.client as mqtt
 import ujson
 import numpy as np
 
-host = "171.99.253.215"
+host = "patikorn-ptk.duckdns.org"
 port = 1883
 
 ranges_mat = []
@@ -35,7 +35,7 @@ def on_message(client, userdata, msg):
 
 def saveToMat():
     print("=============SAVE==========")
-    sio.savemat("164_real_robot.mat", {
+    sio.savemat("temp.mat", {
         'init_pose': np.array(pose_mat[0]).reshape(-1, 1),  # initial_position
         'pose': np.array(pose_mat).T,  # current_position
         'ranges': np.array(ranges_mat).T,  # Ultrasonics_range_data

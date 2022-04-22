@@ -168,6 +168,8 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     offset = np.array((origin_position[0]-7, origin_position[1]-7)) #19, 12
     groundTruth[offset[0]:offset[0] + groundTruth_raw.shape[0], offset[1]:offset[1] + groundTruth_raw.shape[1]] = groundTruth_raw
 
+    slam_map_b_post = slam_map.copy()
+
     slam_map[slam_map >= 50] = 100 #50
     slam_map[slam_map <= -25] = -50 #-10
     #slam_map[slam_map > -10 & slam_map < 50] = 0
@@ -175,20 +177,25 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
 
     slam_map = morph(slam_map)
 
-    occupancy_grid[np.round_(occupancy_grid) == 0] = -50
+    slam_map_b_post[np.where((np.round_(slam_map_b_post) > -5) & (np.round_(slam_map_b_post) < 5))] = -50
+    occupancy_grid[np.where((np.round_(occupancy_grid) > -5) & (np.round_(slam_map_b_post) < 5))] = -50
     groundTruth[np.round_(groundTruth) == 0] = -50
 
+    mse_slam_map_b_post , ssim_slam_map_b_post = compare_map(slam_map_b_post, groundTruth)
+    
     mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
 
     mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth)
+
     mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
 
     fig, ax = plt.subplots(1, 4)
     fig.set_size_inches(12, 12)
-    ax[0].imshow(slam_map, cmap="gray")
-    ax[0].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
-    ax[0].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
-    ax[0].legend()
+    ax[3].imshow(slam_map, cmap="gray")
+    ax[3].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
+    ax[3].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+    ax[3].legend()
+    '''
     ax[0].annotate("MSE| SLAM->OCCU_MAP:\n"
                    "    {}\n"
                    "MSE| SLAM->GROUND:\n"
@@ -201,23 +208,32 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
                    "    {}%\n"
                    "MS_SSIM| OCCU_MAP->GROUND:\n"
                    "    {}%\n"
-                   .format(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100),[0,-5],annotation_clip=False)
-    ax[0].set_title("SLAM")
+                   "MSE| B_POST->GROUND:\n"
+                   "    {}%\n"
+                   "MS_SSIM| B_POST->GROUND:\n"
+                   "    {}%\n"
+                   .format(mse_slam_occu, mse_slam_ground, mse_occu_ground, ssim_slam_occu.real*100, ssim_slam_ground.real*100, ssim_occu_ground.real*100, mse_slam_map_b_post , ssim_slam_map_b_post.real*100),[0,-5],annotation_clip=False)
+    '''
+    ax[3].set_title("POST-SLAM")
 
-    #"""
     ax[1].imshow(occupancy_grid, cmap="gray")
     ax[1].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
     #ax[1].legend()
-    ax[1].set_title("OCCUPANCY")
+    ax[1].set_title("ODOMETRY")
 
-    ax[2].imshow(groundTruth, cmap="gray")
-    #ax[2].legend()
-    ax[2].set_title("GROUND TRUTH")
+    ax[0].imshow(groundTruth, cmap="gray")
+    #ax[0].legend()
+    ax[0].set_title("GROUND TRUTH")
 
-    ax[3].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
-    ax[3].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
+    #ax[3].plot(states_noise[1, :], states_noise[0, :], "-y", label="noise")
+    #ax[3].plot(slam_states[1, :], slam_states[0, :], "-r", label="pose")
     #ax[3].legend()
-    #"""
+
+    ax[2].imshow(slam_map_b_post, cmap="gray")
+    ax[2].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
+    ax[2].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
+    #ax[2].legend()
+    ax[2].set_title("SLAM")
 
     if (graph):
         plt.show()

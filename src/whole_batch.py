@@ -32,7 +32,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    param = genfromtxt('../data/receive/param.csv', delimiter=',')
+    param = genfromtxt('../data/receive/production/param.csv', delimiter=',')
 
     iter = []
 
@@ -41,8 +41,8 @@ if __name__ == '__main__':
         folder_name = str(file_number)+"_real_robot"
         file_name = folder_name+".mat"
 
-        path_name = os.path.join("../images/batch/", folder_name)
-        path_file = os.path.join("../data/receive/", file_name)
+        path_name = os.path.join("../images/production/", folder_name)
+        path_file = os.path.join("../data/receive/production", file_name)
         os.makedirs(path_name, exist_ok=True)
 
         iter_1_particle = args.n_particle_1
@@ -80,4 +80,4 @@ if __name__ == '__main__':
         iter.append(iter_2)
         iter.append(iter_3)
 
-    np.savetxt('../images/batch/result.csv', np.array(iter), fmt='%10.5f' , delimiter=',')
+    np.savetxt('../images/production/result.csv', np.array(iter), fmt='%10.5f' , delimiter=',')

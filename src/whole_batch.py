@@ -50,17 +50,18 @@ if __name__ == '__main__':
         iter_3_particle = args.n_particle_3
 
         origin_position = (int(param[i][1]),int(param[i][2]))
-        origin_rotate = int(param[i][3])
-        flip = int(param[i][4])
+        origin_rotate = int(param[i][5])
+        post_position = (int(param[i][3]),int(param[i][4]))
+        flip = int(param[i][6])
 
         fig_1, iter_1 = plot_map(map_resolution=args.map_resolution, n_particle=iter_1_particle, data=path_file,
-                                 graph=False, origin_position=origin_position,
+                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
                                  origin_rotate=origin_rotate, flip=flip, disable_bar=True)
         fig_2, iter_2 = plot_map(map_resolution=args.map_resolution, n_particle=iter_1_particle, data=path_file,
-                                 graph=False, origin_position=origin_position,
+                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
                                  origin_rotate=origin_rotate, flip=flip, disable_bar=True)
         fig_3, iter_3 = plot_map(map_resolution=args.map_resolution, n_particle=iter_3_particle, data=path_file,
-                                 graph=False, origin_position=origin_position,
+                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
                                  origin_rotate=origin_rotate, flip=flip, disable_bar=True)
 
         fig_1.savefig(os.path.join(path_name, str(iter_1_particle) + ".png"))

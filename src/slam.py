@@ -60,7 +60,7 @@ class newSLAM(SLAM):
         )
         return self.current_state
 
-def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,flip,disable_bar=False):
+def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,post_position,post_rotate,flip,disable_bar=False):
     # Use a breakpoint in the code line below to debug your script.
 
     data = loadmat(data)
@@ -165,8 +165,12 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
         groundTruth_raw = np.flip(groundTruth_raw,1)
     groundTruth_raw = ndimage.rotate(groundTruth_raw, origin_rotate)
     groundTruth = np.zeros((40, 40))
-    offset = np.array((origin_position[0]-7, origin_position[1]-7)) #19, 12
+    offset = np.array((origin_position[1]-7, origin_position[0]-7)) #19, 12
     groundTruth[offset[0]:offset[0] + groundTruth_raw.shape[0], offset[1]:offset[1] + groundTruth_raw.shape[1]] = groundTruth_raw
+
+    groundTruth_for_post = np.zeros((40,40))
+    offset_for_post = np.array((post_position[1]-7, post_position[0]-7))
+    groundTruth_for_post[offset_for_post[0]:offset_for_post[0] + groundTruth_raw.shape[0], offset_for_post[1]:offset_for_post[1] + groundTruth_raw.shape[1]] = groundTruth_raw
 
     slam_map_b_post = slam_map.copy()
 
@@ -180,17 +184,22 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     slam_map_b_post[np.where((np.round_(slam_map_b_post) > -5) & (np.round_(slam_map_b_post) < 5))] = -50
     occupancy_grid[np.where((np.round_(occupancy_grid) > -5) & (np.round_(slam_map_b_post) < 5))] = -50
     groundTruth[np.round_(groundTruth) == 0] = -50
+    groundTruth_for_post[np.round_(groundTruth_for_post) == 0] = -50
 
     mse_slam_map_b_post , ssim_slam_map_b_post = compare_map(slam_map_b_post, groundTruth)
     
-    mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
+    #mse_slam_occu, ssim_slam_occu = compare_map(slam_map, occupancy_grid)
 
-    mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth)
+    mse_slam_ground, ssim_slam_ground = compare_map(slam_map, groundTruth_for_post)
 
     mse_occu_ground, ssim_occu_ground = compare_map(occupancy_grid, groundTruth)
 
-    fig, ax = plt.subplots(1, 4)
+    fig, ax = plt.subplots(1, 5)
     fig.set_size_inches(8, 2)
+
+    ax[4].imshow(groundTruth_for_post, cmap="gray")
+    ax[4].set_title("Post GroundTruth")
+
     ax[3].imshow(slam_map, cmap="gray")
     ax[3].plot(idx_slam[1, :], idx_slam[0, :], "-r", label="slam")
     ax[3].plot(idx_noise[1, :], idx_noise[0, :], "-y", label="pose")
@@ -221,7 +230,7 @@ def plot_map(map_resolution,n_particle,data,graph,origin_position,origin_rotate,
     #ax[1].legend()
     ax[1].set_title("ODOMETRY")
 
-    ax[0].imshow(groundTruth, cmap="gray")
+    ax[0].imshow(groundTruth_for_post, cmap="gray")
     #ax[0].legend()
     ax[0].set_title("GROUND TRUTH")
 
@@ -275,11 +284,24 @@ if __name__ == '__main__':
         "--origin_position",
         nargs='+',
         type=int,
-        default=(26,19)
+        default=(19,26)
     )
     parser.add_argument(
         "-or",
         "--origin_rotate",
+        default=0,
+        type=int
+    )
+    parser.add_argument(
+        "-pp",
+        "--post_position",
+        nargs='+',
+        type=int,
+        default=(19,26)
+    )
+    parser.add_argument(
+        "-pr",
+        "--post_rotate",
         default=0,
         type=int
     )
@@ -291,7 +313,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data.name,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,flip=args.flip)
+    fig, result = plot_map(map_resolution=args.map_resolution,n_particle=args.n_particle,data=args.data.name,graph=args.graph,origin_position=args.origin_position,origin_rotate=args.origin_rotate,post_position=args.post_position,post_rotate=args.post_rotate,flip=args.flip)
     print(result)
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

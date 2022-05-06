@@ -39,18 +39,14 @@ optional arguments:
   ```
 
 ```
-usage: whole_batch.py [-h] [-m MAP_RESOLUTION] [-n1 N_PARTICLE_1] [-n2 N_PARTICLE_2] [-n3 N_PARTICLE_3]
+usage: whole_batch.py [-h] [-m MAP_RESOLUTION] [-n N_PARTICLE [N_PARTICLE ...]]
 
 optional arguments:
   -h, --help            show this help message and exit
   -m MAP_RESOLUTION, --map_resolution MAP_RESOLUTION
                         Number of cells to subdivide 1 meter into
-  -n1 N_PARTICLE_1, --n_particle_1 N_PARTICLE_1
-                        Number of particles in the particle filter (iter1)
-  -n2 N_PARTICLE_2, --n_particle_2 N_PARTICLE_2
-                        Number of particles in the particle filter (iter2)
-  -n3 N_PARTICLE_3, --n_particle_3 N_PARTICLE_3
-                        Number of particles in the particle filter (iter3)
+  -n N_PARTICLE [N_PARTICLE ...], --n_particle N_PARTICLE [N_PARTICLE ...]
+                        list of number of particles in the particle filter
 ```
 
 

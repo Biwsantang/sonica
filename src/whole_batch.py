@@ -12,73 +12,54 @@ if __name__ == '__main__':
         help="Number of cells to subdivide 1 meter into",
     )
     parser.add_argument(
-        "-n1",
-        "--n_particle_1",
-        default=500,
-        help="Number of particles in the particle filter (iter1)",
-    )
-    parser.add_argument(
-        "-n2",
-        "--n_particle_2",
-        default=1000,
-        help="Number of particles in the particle filter (iter2)",
-    )
-    parser.add_argument(
-        "-n3",
-        "--n_particle_3",
-        default=1500,
-        help="Number of particles in the particle filter (iter3)",
+        "-n",
+        "--n_particle",
+        nargs='+',
+        type=int,
+        default=(500,1000,1500),
+        help="list of number of particles in the particle filter"
     )
 
     args = parser.parse_args()
 
-    param = genfromtxt('../data/receive/production/param.csv', delimiter=',')
+    params = genfromtxt('../data/receive/production/param.csv', delimiter=',')
 
-    iter = []
+    all_result = []
 
-    for i in tqdm(range(len(param))): # len(param)
-        file_number = int(param[i][0])
-        folder_name = str(file_number)+"_real_robot"
-        file_name = folder_name+".mat"
+    print(len(args.n_particle))
 
-        path_name = os.path.join("../images/production/", folder_name)
-        path_file = os.path.join("../data/receive/production", file_name)
-        os.makedirs(path_name, exist_ok=True)
+    for particle in args.n_particle:
+        print("Start generating map with {particle}".format(particle=particle))
+        for param in tqdm(params): # len(param)
+            file_number = int(param[0])
+            folder_name = str(file_number)+"_real_robot"
+            file_name = folder_name+".mat"
 
-        iter_1_particle = args.n_particle_1
-        iter_2_particle = args.n_particle_2
-        iter_3_particle = args.n_particle_3
+            path_name = os.path.join("../images/production/", folder_name)
+            path_file = os.path.join("../data/receive/production", file_name)
+            os.makedirs(path_name, exist_ok=True)
 
-        origin_position = (int(param[i][1]),int(param[i][2]))
-        origin_rotate = int(param[i][5])
-        post_position = (int(param[i][3]),int(param[i][4]))
-        flip = int(param[i][6])
+            iter_particle = particle
 
-        fig_1, iter_1 = plot_map(map_resolution=args.map_resolution, n_particle=iter_1_particle, data=path_file,
-                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
-                                 origin_rotate=origin_rotate, flip=flip, disable_bar=True)
-        fig_2, iter_2 = plot_map(map_resolution=args.map_resolution, n_particle=iter_1_particle, data=path_file,
-                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
-                                 origin_rotate=origin_rotate, flip=flip, disable_bar=True)
-        fig_3, iter_3 = plot_map(map_resolution=args.map_resolution, n_particle=iter_3_particle, data=path_file,
-                                 graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
-                                 origin_rotate=origin_rotate, flip=flip, disable_bar=True)
+            origin_position = (int(param[1]),int(param[2]))
+            origin_rotate = int(param[5])
+            post_position = (int(param[3]),int(param[4]))
+            flip = int(param[6])
 
-        fig_1.savefig(os.path.join(path_name, str(iter_1_particle) + ".png"))
-        fig_2.savefig(os.path.join(path_name, str(iter_2_particle) + ".png"))
-        fig_3.savefig(os.path.join(path_name, str(iter_3_particle) + ".png"))
+            fig, iter = plot_map(map_resolution=args.map_resolution, n_particle=iter_particle, data=path_file,
+                                    graph=False, origin_position=origin_position, post_position=post_position, post_rotate=origin_rotate,
+                                    origin_rotate=origin_rotate, flip=flip, disable_bar=True)
 
-        iter_1.insert(0, iter_1_particle)
-        iter_1.insert(0, file_number)
+            fig.savefig(os.path.join(path_name, str(iter_particle) + ".png"))
 
-        iter_2.insert(0, iter_2_particle)
-        iter_2.insert(0, file_number)
+            result = []
 
-        iter_3.insert(0, iter_3_particle)
-        iter_3.insert(0, file_number)
-        
-        iter.append(iter_1)
-        iter.append(iter_2)
-        iter.append(iter_3)
+            result.insert(0, iter[2])
+            result.insert(0, iter[1])
+            result.insert(0, iter[0])
+            result.insert(0, iter_particle)
+            result.insert(0, file_number)
+            
+            all_result.append(result)
 
-    np.savetxt('../images/production/result.csv', np.array(iter), fmt='%10.5f' , delimiter=',')
+    np.savetxt('../images/production/result.csv', np.array(all_result), fmt='%10.5f' , delimiter=',')

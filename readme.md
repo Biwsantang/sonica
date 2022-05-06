@@ -1,7 +1,5 @@
 # Sonica
 
-Foobar is a Python library for dealing with word pluralization.
-
 ## Installation
 
 for easiest way to setup environment. Recommend to use [pipenv](https://pipenv-fork.readthedocs.io/en/latest/) to setup.
@@ -10,12 +8,23 @@ for easiest way to setup environment. Recommend to use [pipenv](https://pipenv-f
 pipenv install
 ```
 
+## Requirement
+
+for maunal installation. packages require:
+- crazyslam (in lib/ folder)
+- ujson
+- paho-mqtt
+- opencv-python
+- sewar
+
 ## Usage
 
+example command:
 ```zsh
 python slam.py -d "../data/receive/120_real_robot.mat" -n 5000 -g -op 19 26 -or 0 -pp 19 26 -pr 0 -f
 ```
 
+slam.py
 ```
 usage: slam.py [-h] [-m MAP_RESOLUTION] [-n N_PARTICLE] [-d DATA] [-g] [-op ORIGIN_POSITION [ORIGIN_POSITION ...]] [-or ORIGIN_ROTATE] [-pp POST_POSITION [POST_POSITION ...]] [-pr POST_ROTATE] [-f]
 
@@ -38,6 +47,7 @@ optional arguments:
   -f, --flip            Option to flip map
   ```
 
+whole_batch.py
 ```
 usage: whole_batch.py [-h] [-m MAP_RESOLUTION] [-n N_PARTICLE [N_PARTICLE ...]]
 
@@ -48,22 +58,3 @@ optional arguments:
   -n N_PARTICLE [N_PARTICLE ...], --n_particle N_PARTICLE [N_PARTICLE ...]
                         list of number of particles in the particle filter
 ```
-
-
-# returns 'words'
-foobar.pluralize('word')
-
-# returns 'geese'
-foobar.pluralize('goose')
-
-# returns 'phenomenon'
-foobar.singularize('phenomena')
-```
-
-## Contributing
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
-
-Please make sure to update tests as appropriate.
-
-## License
-[MIT](https://choosealicense.com/licenses/mit/)

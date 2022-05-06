@@ -277,38 +277,44 @@ if __name__ == '__main__':
     parser.add_argument(
         "-g",
         "--graph",
-        action='store_true'
+        action='store_true',
+        help="Option to show result graph"
     )
     parser.add_argument(
         "-op",
         "--origin_position",
         nargs='+',
         type=int,
-        default=(19,26)
+        default=(19,26),
+        help="Origin coordinator of ground truth map (x,y)"
     )
     parser.add_argument(
         "-or",
         "--origin_rotate",
         default=0,
-        type=int
+        type=int,
+        help="Rotation of ground truth map (degree)"
     )
     parser.add_argument(
         "-pp",
         "--post_position",
         nargs='+',
         type=int,
-        default=(19,26)
+        default=(19,26),
+        help="Origin coordinator of post-SLAM map (x,y)"
     )
     parser.add_argument(
         "-pr",
         "--post_rotate",
         default=0,
-        type=int
+        type=int,
+        help="Rotation of post-SLAM map (degree)"
     )
     parser.add_argument(
         "-f",
         "--flip",
-        action='store_true'
+        action='store_true',
+        help="Option to flip map"
     )
 
     args = parser.parse_args()

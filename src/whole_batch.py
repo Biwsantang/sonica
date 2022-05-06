@@ -15,19 +15,19 @@ if __name__ == '__main__':
         "-n1",
         "--n_particle_1",
         default=500,
-        help="Number of particles in the particle filter",
+        help="Number of particles in the particle filter (iter1)",
     )
     parser.add_argument(
         "-n2",
         "--n_particle_2",
         default=1000,
-        help="Number of particles in the particle filter",
+        help="Number of particles in the particle filter (iter2)",
     )
     parser.add_argument(
         "-n3",
         "--n_particle_3",
         default=1500,
-        help="Number of particles in the particle filter",
+        help="Number of particles in the particle filter (iter3)",
     )
 
     args = parser.parse_args()
